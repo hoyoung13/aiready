@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // ✅ 추가
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,7 +10,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _idCtl = TextEditingController();
+  final _idCtl = TextEditingController(); // 이메일(아이디)
   final _pwCtl = TextEditingController();
   bool _loading = false;
 
@@ -20,28 +21,64 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  void _msg(String m) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+
   Future<void> _emailLogin() async {
-    if (_idCtl.text.isEmpty || _pwCtl.text.isEmpty) {
+    final email = _idCtl.text.trim().toLowerCase();
+    final pw = _pwCtl.text;
+
+    if (email.isEmpty || pw.isEmpty) {
       _msg('아이디/비밀번호를 입력하세요.');
       return;
     }
+
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 600)); // TODO: 실제 로그인 연동
-    if (mounted) {
-      setState(() => _loading = false);
-      context.go('/tabs');
+    try {
+      // ✅ Firebase Auth 이메일/비밀번호 로그인
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: pw);
+
+      // 로그인 성공 → 홈(or 탭)으로 이동
+      if (mounted) context.go('/tabs');
+    } on FirebaseAuthException catch (e) {
+      // 흔한 에러 메시지 매핑
+      String human = '로그인에 실패했어요.';
+      switch (e.code) {
+        case 'invalid-email':
+          human = '이메일 형식이 올바르지 않아요.';
+          break;
+        case 'user-not-found':
+          human = '존재하지 않는 계정이에요.';
+          break;
+        case 'wrong-password':
+          human = '비밀번호가 일치하지 않아요.';
+          break;
+        case 'user-disabled':
+          human = '비활성화된 계정이에요.';
+          break;
+      }
+      _msg(human);
+    } catch (_) {
+      _msg('네트워크 또는 알 수 없는 오류입니다.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _kakaoLogin() async {
     try {
       setState(() => _loading = true);
+
       final installed = await isKakaoTalkInstalled();
       if (installed) {
         await UserApi.instance.loginWithKakaoTalk();
       } else {
         await UserApi.instance.loginWithKakaoAccount();
       }
+
+      // ⚠️ 참고: Kakao로 Firebase에 로그인하려면 서버에서 커스텀 토큰 발급이 필요합니다.
+      // 지금은 Kakao만 성공 시 바로 이동(임시).
       if (mounted) context.go('/tabs');
     } catch (e) {
       _msg('카카오 로그인에 실패했어요. 다시 시도해주세요.');
@@ -49,9 +86,6 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) setState(() => _loading = false);
     }
   }
-
-  void _msg(String m) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
 
   @override
   Widget build(BuildContext context) {
@@ -112,14 +146,16 @@ class _LoginPageState extends State<LoginPage> {
                     // 아이디 / 비밀번호 입력
                     TextField(
                       controller: _idCtl,
+                      keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      decoration: inputStyle('아이디를 입력하세요'),
+                      decoration: inputStyle('아이디(이메일)를 입력하세요'),
                     ),
                     const SizedBox(height: 14),
                     TextField(
                       controller: _pwCtl,
                       obscureText: true,
                       decoration: inputStyle('비밀번호를 입력하세요'),
+                      onSubmitted: (_) => _emailLogin(), // 엔터로 로그인
                     ),
                     const SizedBox(height: 18),
 
