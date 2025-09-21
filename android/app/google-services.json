@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "759174286548",
+    "project_id": "aiready-a1170",
+    "storage_bucket": "aiready-a1170.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:759174286548:android:19e6bd1090a49eab69bf41",
+        "android_client_info": {
+          "package_name": "com.example.ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBD55W55PXyC5fVbzqnCsGyGB5Jr95xqaM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:759174286548:android:659161bd1325f92c69bf41",
+        "android_client_info": {
+          "package_name": "com.example.theready"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBD55W55PXyC5fVbzqnCsGyGB5Jr95xqaM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
